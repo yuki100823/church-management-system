@@ -1,139 +1,139 @@
-# 教会管理系统 微信小程序开发说明
+# Church Management System WeChat Mini Program Development Specification
 
-## 1 给 Codex 的任务
+## 1 Task for Codex
 
-在当前代码仓库开发 Grace Church 教会管理系统的微信小程序。界面以提供的 HTML 原型为准，使用 **uni-app 常规版、Vue 3、TypeScript**。小程序位于 `apps/member-client`。已有仓库结构或构建流程时，沿用现有约定。
+Develop the WeChat mini program for the Grace Church management system in the current code repository. Use the supplied HTML prototype as the UI reference and build with **standard uni-app, Vue 3, and TypeScript**. The mini program lives in `apps/member-client`. Follow the repository's existing structure and build conventions where applicable.
 
-**默认执行阶段 A。** 交付能在 Win10 的微信开发者工具中打开的、可交互的小程序演示版。如果仓库已有可用后端，优先复用现有接口，并保留独立的本地演示方式。阶段 B 和 C 用来指导后续开发。
+**Implement Phase A by default.** Deliver an interactive mini program demo that can be opened in WeChat DevTools on Windows 10. If the repository already has a usable backend, reuse its existing endpoints and retain a standalone local demo mode. Phases B and C guide subsequent development.
 
-开始前检查 `AGENTS.md`、`README.md`、`package.json`、锁文件和已有源码。空仓库可按本文初始化。遇到真实 AppID、测试账号或后端地址缺失时，继续完成可以本地验证的工作，并在交付时列明需要补的配置。
+Before starting, check `AGENTS.md`, `README.md`, `package.json`, the lockfile, and any existing source code. If the repository is empty, initialize it using the guidance in this document. If a real AppID, test account, or backend URL is unavailable, continue with the work you can verify locally and identify the outstanding configuration at handoff.
 
-## 2 参考文件
+## 2 Reference Files
 
-| 文件 | 用途 |
+| File | Purpose |
 | --- | --- |
-| `Grace+Church+·+教会管理+App+原型.html` | 视觉、文案、页面顺序与交互入口 |
-| `教会管理系统需求文档.docx` | 教会业务功能和角色定义 |
-| `Church_Management_Architecture_V1.md` | 后端、权限、数据模型、文件存储及接口规划 |
+| `Grace+Church+·+教会管理+App+原型.html` | Visual design, UI copy, page order, and interaction entry points |
+| `教会管理系统需求文档.docx` | Church business requirements and role definitions |
+| `Church_Management_Architecture_V1.md` | Backend, permissions, data models, file storage, and API design |
 
-参考文件可放在 `docs/reference/`，也可由用户直接附给 Codex。HTML 优先决定视觉和导航。架构文档优先决定数据、身份和权限。把原型里的 DOM、模拟计数和弹窗交互改写为 Vue 组件及实际操作状态。保留中英文文案并补齐状态提示。
+Place the reference files in `docs/reference/` or attach them directly to the Codex task. Use the HTML prototype as the primary reference for visual design and navigation. Use the architecture document as the primary reference for data, identity, and permissions. Replace the prototype's direct DOM interactions, simulated counters, and pop-ups with Vue components and UI states that reflect the operation's result. Retain the Chinese and English copy and add missing status messages.
 
-## 3 页面和视觉
+## 3 Pages and Visual Design
 
-保留原型的五个底部入口，顺序为 **首页、会员、小组、资料、更多**。欢迎页和语言选择沿用原型。教会名称等全局配置由后台维护，用户端读取配置。首页保留绿色顶部、活动签到卡、常用服务入口、通知和可见的统计信息。
+Keep the prototype's five bottom navigation tabs. Their order is **Home → Members → Groups → Resources → More**. Follow the prototype for the welcome screen and language selection. Administrators maintain global settings such as the church name, and the client reads that configuration. Home keeps the green header, event check-in card, shortcuts to common services, announcements, and any statistics the user is allowed to see.
 
-| 设计变量 | 原型颜色 |
+| Design Token | Prototype Value |
 | --- | --- |
-| 主色 | `#316b58` |
-| 页面背景 | `#fbf9f3` |
-| 正文 | `#20372e` |
-| 次要文字 | `#718279` |
-| 签到点缀 | `#c99848` |
-| 卡片 | `#ffffff`，圆角和轻阴影 |
+| Primary color | `#316b58` |
+| Page background | `#fbf9f3` |
+| Main text | `#20372e` |
+| Secondary text | `#718279` |
+| Check-in accent | `#c99848` |
+| Card | `#ffffff`, rounded corners, and a subtle shadow |
 
-颜色、间距、圆角集中管理。用 uni-app 组件和平台接口实现页面，适配手机屏幕、底部安全区和大字体。中英翻译放进语言资源。保存语言偏好，并提供加载、空数据、失败重试、无权限和提交中的状态。入口尚未开放时，显示可理解的状态，避免点击后无反应。
+Centralize colors, spacing, and corner radii. Build the screens with uni-app components and platform APIs. Support different phone screen sizes, the bottom safe area, and large text. Store the Chinese and English translations in language resources and persist the user's language preference. Provide loading, empty, error with retry, access denied, and submitting states. When an entry leads to an unavailable feature, show a clear status message.
 
-以下路径是空仓库的建议，已有路由时沿用实际命名。
+Use the suggested paths below for an empty repository. Keep existing names if routes are already in place.
 
-| 页面 | 建议路径 | 阶段 A 行为 |
+| Page | Suggested Path | Phase A Behavior |
 | --- | --- | --- |
-| 欢迎与语言 | `pages/welcome/index` | 首次打开选语言，继续进入首页。更多页可切换语言 |
-| 首页 | `pages/home/index` | 显示教会、今日活动、签到入口、常用服务和通知 |
-| 会员登录 | `pages/auth/index` | 演示模式进入固定的模拟会员会话，恢复登录后的操作 |
-| 活动详情与签到 | `pages/events/detail` | 显示活动场次、时间、签到状态，支持签到成功与重复提交 |
-| 新朋友登记 | `pages/events/guest-checkin` | 保留姓名、联系方式和是否首次参加的字段，用虚构资料演示表单校验与签到 |
-| 会员 | `pages/members/index` | 登录后显示本人资料。未登录时提供登录入口 |
-| 小组 | `pages/groups/index` | 查看演示地区、集合地点和读经进度，遵守可见范围 |
-| 资料 | `pages/resources/index` | 按旧约、新约、经卷和类型浏览演示资料 |
-| 资料详情 | `pages/resources/detail` | 至少一条测试音频可播放、暂停并显示状态 |
-| 通知 | `pages/notices/index`、`pages/notices/detail` | 可打开列表和详情 |
-| 更多 | `pages/more/index` | 语言、账号状态、退出登录。按原型保留后续功能入口 |
+| Welcome and language | `pages/welcome/index` | Let users choose a language on first launch before continuing to Home. They can switch languages from More. |
+| Home | `pages/home/index` | Show the church, today's events, check-in, shortcuts to common services, and announcements. |
+| Member sign-in | `pages/auth/index` | Start a session for a fixed demo member, then resume the action that prompted sign-in. |
+| Event details and check-in | `pages/events/detail` | Show the session, time, and check-in status. Handle successful check-in and repeat submissions. |
+| Guest registration | `pages/events/guest-checkin` | Include fields for name, contact details, and whether this is the guest's first visit. Use fictional data to demonstrate validation and check-in. |
+| Members | `pages/members/index` | Show the signed-in member's own profile. Provide a sign-in entry for users without a session. |
+| Groups | `pages/groups/index` | Show sample areas, meeting locations, and Bible reading progress within the user's access scope. |
+| Resources | `pages/resources/index` | Browse sample resources by Old or New Testament, book of the Bible, and resource type. |
+| Resource details | `pages/resources/detail` | Provide at least one test audio track that can be played and paused, with its playback state shown. |
+| Announcements | `pages/notices/index`, `pages/notices/detail` | Open the list and individual announcements. |
+| More | `pages/more/index` | Include language, account status, and sign-out. Preserve the prototype's entries for later features. |
 
-通知、书库、奉献、友好教会等保留原型的入口位置。阶段 A 实现通知查看。奉献公示、借阅和友好教会目录按阶段 C 补齐。
+Keep the prototype's entry locations for Announcements, Library, Giving, Partner Churches, and other features. Implement announcement viewing in Phase A. Implement giving summaries, library borrowing, and the partner church directory in Phase C.
 
-## 4 开发阶段
+## 4 Development Phases
 
-### 阶段 A 小程序本地演示
+### Phase A Local Mini Program Demo
 
-1. 建立微信小程序构建入口，完成页面路由、设计变量和中英文切换。
-2. 准备虚构教会、会员、场次、小组、通知和资料。演示场次按当前教会本地日期生成，避免日期写死后无法签到。
-3. 通过统一的数据访问入口提供演示数据。页面调用相同的服务方法，后续切换 HTTP 接口时可以复用页面。
-4. 实现两条流程。模拟会员登录后签到，新朋友登记后签到。演示状态在本机保留，重开小程序可看到签到结果。对同一演示身份和场次重复提交只计一次。
-5. 实现至少一段自制或已有授权的测试音频。播放器处理加载、播放、暂停、错误和页面离开时的清理。
-6. 生成微信小程序构建产物，写清 Win10 安装依赖、编译、导入和操作步骤。
+1. Set up the WeChat mini program build target, page routes, design tokens, and Chinese and English language switching.
+2. Prepare fictional church, member, session, group, announcement, and resource data. Generate demo sessions for the current date in the church's time zone so check-in remains available as the date changes.
+3. Serve demo data through a shared data access layer. Pages should call the same service methods when switching to HTTP so they can be reused.
+4. Let demo members sign in and check in, and let guests register and check in. Persist demo state locally so users can see their check-in results after reopening the app. Count repeat submissions for the same demo identity and session only once.
+5. Include at least one original or authorized test audio track. Handle loading, playback, pause, errors, and cleanup when the user leaves the page.
+6. Generate the WeChat mini program build output. Document dependency installation, compilation, import, and demo steps on Windows 10.
 
-开发配置可启用 `mock` 模式。这个模式只使用虚构数据，不依赖 PostgreSQL、AWS 或真实微信密钥。阶段 A 使用开发编译产物演示，README 写明开启方式。真实 API 模式遇到错误时显示错误，避免自动切回演示数据。发布构建应禁止演示登录和演示数据模式。
+The development configuration can enable `mock` mode. It uses fictional data and runs without PostgreSQL, AWS, or actual WeChat secrets. Use the development build for the Phase A demo and document how to enable it in the README. In live API mode, display request errors and avoid silently falling back to demo data. Release builds must disable demo sign-in and demo data mode.
 
-### 阶段 B 联调真实登录和签到
+### Phase B Live Sign-In and Check-In Integration
 
-1. 使用已有 NestJS API。后端尚未建立时，从 `apps/api` 的登录、会员、活动场次、签到开始，实现 PostgreSQL 迁移与开发种子数据。API 供将来的 iOS、Android 和管理后台共享。
-2. 小程序调用 `wx.login` 或 uni-app 的微信登录接口，提交临时 `code`。服务端用微信凭据兑换身份，返回本系统的会话。微信 AppSecret、会话密钥和数据库凭据保存在服务端。
-3. 区分游客、已登录但未关联会员、已关联会员。通过核验邀请或验证已有账号绑定档案。微信身份和邮箱登录可以映射到同一个内部账号。避免按姓名自动合并，也避免用手机号后四位当密码。
-4. 把首页、本人资料、小组和活动签到接到真实 API。用测试数据库验证同一会员同一场次重复请求只留下一个结果。
-5. 在微信开发者工具和真机分别验证登录、合法域名、HTTPS 和网络错误提示。微信 AppID 与实际访问条件由项目配置提供。
+1. Use the existing NestJS API. If there is no backend yet, start with sign-in, member profiles, event sessions, and check-ins in `apps/api`, including PostgreSQL migrations and development seed data. The iOS app, Android app, and admin portal will share this API.
+2. The mini program calls `wx.login` or the uni-app WeChat sign-in API and sends the temporary `code` to the server. The server uses its WeChat credentials to exchange the code for an identity and return an application session. Keep the WeChat AppSecret, session keys, and database credentials on the server.
+3. Distinguish guests, signed-in users with no linked member profile, and users with a linked profile. Link profiles through a validated invitation or by verifying an existing account. A WeChat identity and an email sign-in may map to the same internal account. Avoid automatically merging records by name or using the last four digits of a phone number as a password.
+4. Connect Home, personal profiles, groups, and event check-in to the live API. Use a test database to verify that repeat requests for the same member and session produce a single check-in record.
+5. Test sign-in, allowed domains, HTTPS, and network error messages in both WeChat DevTools and on a physical device. Obtain the WeChat AppID and access settings from the project configuration.
 
-### 阶段 C 资料和其余功能
+### Phase C Resources and Remaining Features
 
-接入真实通知、圣经资料和文件播放。管理后台上传音频，服务端校验用户权限并签发短期播放地址。接着完成奉献汇总、资产、书库借阅和友好教会目录。通知中心先提供应用内消息，订阅消息使用已核验的模板和用户授权。若用户要求课程预约、在线奉献或多教会，再明确对应流程和权限。
+Connect live announcements, Bible resources, and media playback. Administrators upload audio through the admin portal. The server checks access and issues a short-lived playback URL. Then implement giving summaries, assets, library borrowing, and the partner church directory. Start with in-app notifications. For WeChat subscription messages, use verified templates and obtain user consent. If class bookings, online giving, or support for multiple churches is requested, define the corresponding workflows and permissions first.
 
-## 5 业务规则
+## 5 Business Rules
 
-### 身份和可见范围
+### Identity and Visibility
 
-- `users` 表示登录账号，`members` 表示教会会员档案。一个账号可以绑定不同登录方式。
-- 首页可返回允许公开展示的信息。普通会员默认只能查看本人档案。小组长只看本组被授权的字段。财务、代祷、导出和后台管理使用单独权限。
-- 以前端会话状态控制页面展示，由服务端按账号、教会和资源校验每次请求。服务端从已认证会话识别操作者。
-- 退出登录或会话过期时，清掉会话和受限页面的缓存。重新登录后重新取数据。
+- `users` represents sign-in accounts and `members` represents church member profiles. An account can link multiple sign-in methods.
+- Home may return information approved for public display. Regular members can see only their own profile by default. Group leaders can see only the fields they are authorized to view for their own group. Finance, intercessory prayer, data export, and administration require separate permissions.
+- Use client session state to control what the UI shows. The server authorizes each request based on the account, church, and resource, and identifies the person making the request from the authenticated session.
+- When the user signs out or the session expires, clear the session and cached data for restricted pages. Fetch the data again after sign-in.
 
-### 签到
+### Check-In
 
-- 使用 `eventSessionId` 区分同一活动的不同日期和时间段。页面展示教会时区下的时间。开发数据暂用 `America/Vancouver`。
-- 会员签到由服务端识别身份、检查场次和签到窗口。数据库用场次和参与者的唯一约束保证重复提交和并发请求只计一次。
-- 重复签到返回已有记录和友好提示。超时或断网可以重试，并按服务端结果更新页面。
-- 新朋友登记只收集本场必要信息。真实环境用活动凭证和限流保护登记入口。游客的演示去重只针对本机模拟身份，跨设备去重需要真实参与者标识。
-- 每笔签到记录保存当时的参与者分类。新朋友成为会员以后，已发生的场次保留原统计口径。普通用户只查看有权获得的签到结果或汇总。
+- Use `eventSessionId` to distinguish occurrences of the same event on different dates or in different time slots. Display times in the church's time zone. Use `America/Vancouver` for development data for now.
+- For member check-in, the server identifies the member and verifies the session and check-in window. A database uniqueness constraint on the session and participant ensures retries and concurrent requests count as one check-in.
+- For repeat check-ins, return the existing record and a clear message. Allow users to retry after a timeout or connection loss, then update the page using the server's result.
+- Guest registration collects only the information needed for the session. In a live environment, protect registration with an event credential and rate limiting. The demo deduplicates by a device-local identity. Cross-device deduplication requires a real participant identifier.
+- Store the participant's category at the time of check-in. If a guest later becomes a member, keep the historical attendance categories for past sessions. Regular users can view only the check-in results or totals they are authorized to access.
 
-### 音频
+### Audio
 
-- 资料列表包含分类、标题、类型、语言和可见状态。授权播放时再向后端申请地址。
-- 播放控制需要处理暂停、进度、错误和离开页面。签名失效时重新授权，并尽可能从原进度继续。
-- 开发阶段可使用本地测试文件。真实环境使用私有对象存储。客户端只接收授权后的播放 URL，数据库保存文件标识和元数据。
+- The resource list includes category, title, type, language, and visibility. Request an authorized playback URL from the backend when the user starts playback.
+- Support pausing, progress, error handling, and cleanup when leaving the page. If the signed URL expires, request a new one and resume from the previous position where possible.
+- Development may use local test files. Use private object storage in the live environment. The client receives only an authorized playback URL, and the database stores file identifiers and metadata.
 
-## 6 接口约定
+## 6 API Conventions
 
-以下为架构文档中的接口规划及页面对接所需的字段说明。已有 API 优先使用实际 OpenAPI 契约。缺少契约时可先定义 TypeScript 类型并让演示模式使用同一份类型。
+The endpoints below come from the architecture plan and include the fields the pages need. For an existing API, use its actual OpenAPI contract. If there is no contract yet, define TypeScript types and use those same types in demo mode.
 
-| 方法及路径 | 请求与响应重点 |
+| Method and Path | Request and Response Details |
 | --- | --- |
-| `POST /api/v1/auth/wechat` | 输入微信临时 `code`。返回系统会话及会员绑定状态 |
-| `POST /api/v1/auth/link-wechat` | 验证当前账号和微信身份，完成绑定 |
-| `GET /api/v1/me` | 本人身份、会员档案摘要、当前可用操作 |
-| `GET /api/v1/home` | 教会展示信息、当天活动场次、可见通知和统计 |
-| `GET /api/v1/event-sessions` | 按日期或活动查询场次，返回场次 ID、时间、地点、签到状态 |
-| `POST /api/v1/event-sessions/{id}/checkins` | 返回签到记录 ID、时间和是否已签到。操作者由会话决定 |
-| `POST /api/v1/event-sessions/{id}/guest-checkins` | 提交新朋友登记及活动凭证，返回本次签到结果 |
-| `GET /api/v1/groups` | 返回用户可见的小组、地区、集合地点和读经进度 |
-| `GET /api/v1/notices` | 返回已发布且用户可见的通知，按需补充详情接口 |
-| `GET /api/v1/resources` | 返回分类、资源类型、语言及可见的元数据 |
-| `POST /api/v1/resources/{id}/playback` | 返回授权播放地址和过期时间 |
+| `POST /api/v1/auth/wechat` | Accept the temporary WeChat `code`. Return an application session and membership linking status. |
+| `POST /api/v1/auth/link-wechat` | Verify the current account and WeChat identity, then link them. |
+| `GET /api/v1/me` | Return the current identity, member profile summary, and permitted actions. |
+| `GET /api/v1/home` | Return church display information, today's event sessions, visible announcements, and permitted statistics. |
+| `GET /api/v1/event-sessions` | Filter sessions by date or event. Return session IDs, times, locations, and check-in status. |
+| `POST /api/v1/event-sessions/{id}/checkins` | Return the check-in record ID, timestamp, and whether the participant had already checked in. Identify the caller from the session. |
+| `POST /api/v1/event-sessions/{id}/guest-checkins` | Accept guest registration details and the event credential. Return the check-in result. |
+| `GET /api/v1/groups` | Return groups, areas, meeting locations, and reading progress visible to the user. |
+| `GET /api/v1/notices` | Return published announcements visible to the user. Add a detail endpoint if needed. |
+| `GET /api/v1/resources` | Return categories, resource types, languages, and visible metadata. |
+| `POST /api/v1/resources/{id}/playback` | Return the authorized playback URL and its expiration time. |
 
-集中处理 API 地址、会话认证头、超时、错误码和重试。用稳定错误码驱动中英文提示，例如 `CHECKIN_WINDOW_CLOSED`。无登录态和无权限应区分处理。日志避免输出令牌、签名地址和会员个人信息。
+Centralize the API URL, session authentication headers, timeouts, error codes, and retries. Use stable error codes such as `CHECKIN_WINDOW_CLOSED` to display Chinese and English messages. Handle unauthenticated and unauthorized requests separately. Keep tokens, signed URLs, and members' personal information out of logs.
 
-## 7 项目与 Win10 运行方式
+## 7 Project Structure and Windows 10 Setup
 
-| 位置 | 内容 |
+| Location | Contents |
 | --- | --- |
-| `apps/member-client` | uni-app 项目、页面路由、应用配置和本地构建脚本 |
-| `apps/member-client/src/pages` | 页面与页面级交互 |
-| `apps/member-client/src/components` | 可复用卡片、按钮、状态和音频组件 |
-| `apps/member-client/src/services` | 业务请求、HTTP 客户端和会话相关接口 |
-| `apps/member-client/src/mocks` | 仅本地开发使用的演示数据和实现 |
-| `apps/member-client/src/i18n` | 中英词条和语言偏好 |
-| `apps/api` | 真实后端联调阶段使用的 NestJS 服务 |
+| `apps/member-client` | uni-app project, page routes, app configuration, and local build scripts |
+| `apps/member-client/src/pages` | Pages and page-level interactions |
+| `apps/member-client/src/components` | Reusable cards, buttons, status components, and audio controls |
+| `apps/member-client/src/services` | Business requests, HTTP client, and session interfaces |
+| `apps/member-client/src/mocks` | Demo data and implementations for local development only |
+| `apps/member-client/src/i18n` | Chinese and English strings and language preferences |
+| `apps/api` | NestJS service used during backend integration |
 
-Win10 开发环境使用 Git、VS Code、Node.js、HBuilderX 和微信开发者工具。接真实本地后端时再准备 PostgreSQL。Node 主版本与包管理器以仓库配置为准。空仓库可先以 Node.js 24 LTS 为计划，检查 uni-app 项目模板及依赖后锁定可用版本。
+Use Git, VS Code, Node.js, HBuilderX, and WeChat DevTools for Windows 10 development. Set up PostgreSQL when connecting a real local backend. Follow the repository's configured Node.js major version and package manager. For an empty repository, start with Node.js 24 LTS as the proposed version, then verify the uni-app template and dependencies before pinning a compatible version.
 
-采用 CLI 工程时，提供以下脚本或在 README 中写明仓库实际等价命令。命令在小程序项目目录或仓库规定的工作区执行。
+For a CLI project, provide the following scripts or document the repository's equivalent commands in the README. Run them from the mini program project directory or the workspace specified by the repository.
 
 ```powershell
 npm.cmd ci
@@ -141,24 +141,24 @@ npm.cmd run dev:mp-weixin
 npm.cmd run build:mp-weixin
 ```
 
-`npm.cmd ci` 用于已有 `package-lock.json` 的 npm 项目。首次初始化生成锁文件，已有其他包管理器时沿用其锁文件。采用 HBuilderX 工作流时，把导入项目及运行到微信开发者工具的操作写入 README。注明实际编译输出目录，微信开发者工具导入该目录。记录模拟器所用开发配置和真机所需 AppID。
+Use `npm.cmd ci` for npm projects that already have a `package-lock.json`. Generate a lockfile during initial setup. If the project uses another package manager, keep its existing lockfile. For an HBuilderX workflow, document how to import the project and launch it in WeChat DevTools. Specify the actual build output directory for import into WeChat DevTools. Record the simulator's development configuration and the AppID required for physical-device testing.
 
-配置集中管理环境模式、API 地址和公开 AppID，提交无密钥的示例文件。开发工具和手机的 API 地址分别配置。手机上的 `localhost` 指向手机自己，联调时使用手机可访问的开发 API，按微信环境处理 HTTPS 与合法域名校验。
+Centralize environment mode, API URL, and public AppID in configuration and commit a sample file with no secrets. Configure the API URL separately for DevTools and phones as needed. On a phone, `localhost` points to the phone itself. For integration testing, use a development API the phone can reach and follow WeChat's requirements for HTTPS and allowed-domain checks.
 
-## 8 验收和交付
+## 8 Acceptance and Handoff
 
-| 场景 | 阶段 A 通过条件 |
+| Scenario | Phase A Acceptance Criteria |
 | --- | --- |
-| 构建 | 在项目环境生成微信小程序产物，可导入微信开发者工具 |
-| 页面 | 首次选择语言后能进入首页，五个底部入口顺序与原型一致 |
-| 双语 | 切换语言后入口和表单可读，重开应用保留偏好 |
-| 会员签到 | 模拟会员登录后能完成本场签到，连续点击及重新打开后只保留一次 |
-| 新朋友签到 | 表单能校验必填项，提交后显示本场结果 |
-| 个人资料 | 未登录时不会显示会员资料。模拟会员只看到本人档案 |
-| 小组与通知 | 有数据、空列表和错误状态可辨识，通知可打开详情 |
-| 资料 | 测试音频可播放和暂停，离开页面后的行为符合设计 |
-| 文档 | 新开发者能按 README 在 Win10 复现构建并找到导入目录 |
+| Build | The project generates WeChat mini program build output that can be imported into WeChat DevTools. |
+| Navigation | After choosing a language on first launch, the user can open Home. The five bottom tabs appear in the same order as the prototype. |
+| Bilingual UI | Navigation and forms remain readable after switching languages. The app retains the language preference after reopening. |
+| Member check-in | A signed-in demo member can check in for the current session. Repeated taps and reopening the app leave only one check-in record. |
+| Guest check-in | The form validates required fields and displays the result for the current session after submission. |
+| Personal profile | Member details are hidden when signed out. A demo member can see only their own profile. |
+| Groups and announcements | Populated, empty, and error states are distinguishable. Users can open individual announcements. |
+| Resources | Test audio can play and pause. Playback behaves as designed when the user leaves the page. |
+| Documentation | A new developer can follow the README to reproduce the build on Windows 10 and find the directory to import. |
 
-阶段 B 增加真实验证。覆盖微信登录与会员绑定、会话过期、越权访问、签到窗口关闭及并发重复签到。阶段 C 验证私有音频的授权、失效续播和访问拒绝。
+In Phase B, verify live WeChat sign-in, member profile linking, session expiration, unauthorized access, closed check-in windows, and concurrent duplicate check-ins. In Phase C, verify authorization for private audio, resuming playback after a URL expires, and denial when the user lacks access.
 
-Codex 完成后说明改动路径、实际运行命令、验证结果和需要用户提供的配置。编译通过、模拟器通过和真机通过分别记录。交付时保留可复现的依赖锁文件、配置示例和演示操作说明。
+At handoff, report the changed paths, commands actually run, verification results, and configuration the user still needs to provide. Record build, simulator, and physical-device verification separately. Include a dependency lockfile for reproducible builds, sample configuration, and demo instructions.
